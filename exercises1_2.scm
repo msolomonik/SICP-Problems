@@ -363,25 +363,91 @@
 ; if b is even just: (double a)*(halve b) + n
 ; want to write procedure with tail recursion so it's iterative
 
-(define (* a b) (mult-iter a b 0))
-(define (mult-iter a b n)
-    (cond
-    ((= b 0) 0) ; need this for edge case
-    ((= b 1) (+ a n))
-    ((odd? b) (mult-iter a (- b 1) (+ n a)))
-    (else (mult-iter (double a) (halve b) n))
-    )
-)
+; (define (* a b) (mult-iter a b 0))
+; (define (mult-iter a b n)
+;     (cond
+;     ((= b 0) 0) ; need this for edge case
+;     ((= b 1) (+ a n))
+;     ((odd? b) (mult-iter a (- b 1) (+ n a)))
+;     (else (mult-iter (double a) (halve b) n))
+;     )
+; )
 
-(* 2 3)     ; expect 6
-(* 1 1)     ; expect 1
-(* 10 10)   ; expect 100
-(* 5 1)     ; expect 5  (base case)
-(* 7 2)     ; expect 14 (even b)
-(* 7 3)     ; expect 21 (odd b)
-(* 0 5)     ; expect 0  (zero case — will this work?)
-(* 5 0)     ; expect 0  (zero case — will this work?)
-(* 1 100)   ; expect 100
-(* 2 16)    ; expect 32 (b is power of 2)
-(* 3 11)    ; expect 33 (odd b)
-(* 100 100) ; expect 10000
+; (* 2 3)     ; expect 6
+; (* 1 1)     ; expect 1
+; (* 10 10)   ; expect 100
+; (* 5 1)     ; expect 5  (base case)
+; (* 7 2)     ; expect 14 (even b)
+; (* 7 3)     ; expect 21 (odd b)
+; (* 0 5)     ; expect 0  (zero case — will this work?)
+; (* 5 0)     ; expect 0  (zero case — will this work?)
+; (* 1 100)   ; expect 100
+; (* 2 16)    ; expect 32 (b is power of 2)
+; (* 3 11)    ; expect 33 (odd b)
+; (* 100 100) ; expect 10000
+
+; Exercise 1.20: The process that a procedure generates is of course dependent on the rules used by the interpreter. As an example, consider the iterative gcd procedure given above. Suppose we were to interpret this procedure using normal-order evaluation, as discussed in 1.1.5. (The normal-order-evaluation rule for if is described in Exercise 1.5.) Using the substitution method (for normal order), illustrate the process generated in evaluating (gcd 206 40) and indicate the remainder operations that are actually performed. How many remainder operations are actually performed in the normal-order evaluation of (gcd 206 40)? In the applicative-order evaluation? 
+
+
+; (define (gcd a b)
+;   (if (= b 0)
+;       a
+;       (gcd b (remainder a b))))
+
+; normal order case:
+; (gcd 206 40)
+; (if (= 40 0)
+;       206
+;       (gcd 40 (remainder 206 40)))
+; (gcd 40 (remainder 206 40))
+; (if (= 40 (remainder 206 40))
+;       40
+;       (gcd (remainder 206 40) (remainder 40 (remainder 206 40))))
+; ; here remainder is evaluated according to the special form of if statements (#1)
+; (gcd (remainder 206 40) (remainder 40 (remainder 206 40)))
+;   (if (= (remainder 40 (remainder 206 40)) 0)
+;       (remainder 206 40)
+;       (gcd (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))))
+; ; for the same reason as above remainder evalutes twice (count = 3)
+; (gcd (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))
+; (if (= (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) 0)
+;     (remainder 40 (remainder 206 40))
+;     (gcd (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40))))))
+; ; here in the if statement remainder evaluates 4 times (count = 7)
+
+; (gcd (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))))
+;   (if (= (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))) 0)
+;       (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))
+;       (gcd (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))) (remainder (remainder (remainder 206 40) (remainder 40 (remainder 206 40))) (remainder (remainder 40 (remainder 206 40)) (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))))))
+; ; and another 7 times (total 14), where it fianlly equals 0 and we return a
+
+; (remainder (remainder 206 40) (remainder 40 (remainder 206 40)))
+; 14 + 4 = 18 total remainder operations
+
+; applicative-order case:
+(gcd 206 40)
+(if (= 40 0)
+      206
+      (gcd 40 (remainder 206 40)))
+; remainder count = 1
+(gcd 40 6)
+(if (= 6 0)
+      40
+      (gcd 6 (remainder 40 6)))
+; count=2
+(gcd 6 4)
+(if (= 4 0)
+      6
+      (gcd 4 (remainder 6 4)))
+; count = 3
+(gcd 4 2)
+(if (= 2 0)
+      6
+      (gcd 2 (remainder 4 2)))
+; count = 4
+(gcd 2 0)
+(if (= 0 0)
+      2
+      (gcd 0 (remainder 2 0)))
+2
+; so in applicative-order evaluation remainder runs 4 times
