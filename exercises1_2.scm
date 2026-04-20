@@ -293,36 +293,95 @@
 ; This is a linear recursive procedure, so the growth of both space and steps is O(n)
 
 ; Exercise 1.16: Design a procedure that evolves an iterative exponentiation process that uses successive squaring and uses a logarithmic number of steps, as does fast-expt. (Hint: Using the observation that ( b n / 2 ) 2 = ( b 2 ) n / 2 , keep, along with the exponent n and the base b , an additional state variable a , and define the state transformation in such a way that the product a b n is unchanged from state to state. At the beginning of the process a is taken to be 1, and the answer is given by the value of a at the end of the process. In general, the technique of defining an invariant quantity that remains unchanged from state to state is a powerful way to think about the design of iterative algorithms.) 
+; the invariant quantity is a*b^n
 
-(define (even? n)
-  (= (remainder n 2) 0))
+; (define (even? n)
+;   (= (remainder n 2) 0))
 
-(define (fast-expt b n)
-    (expt-iter b n 1))
+; (define (fast-expt b n)
+;     (expt-iter b n 1))
 
-(define (expt-iter b n a)
-      (cond 
-        ((= n 0) a)
-        ((even? n) 
-         (expt-iter (* b b) (/ n 2) a)
-        )
-        (else
-         (expt-iter b (- n 1) (* a b)))
-       )
+; (define (expt-iter b n a)
+;       (cond 
+;         ((= n 0) a)
+;         ((even? n) 
+;          (expt-iter (* b b) (/ n 2) a)
+;         )
+;         (else
+;          (expt-iter b (- n 1) (* a b)))
+;        )
+; )
+
+; (fast-expt 2 3)   ; expect 8
+; (fast-expt 2 2)   ; expect 4
+; (fast-expt 1 3)   ; expect 1
+; (fast-expt 2 10)  ; expect 1024
+; (fast-expt 3 3)   ; expect 27
+; (fast-expt 3 4)   ; expect 81
+; (fast-expt 5 3)   ; expect 125
+; (fast-expt 2 0)   ; expect 1
+; (fast-expt 7 2)   ; expect 49
+; (fast-expt 2 16)  ; expect 65536
+; (fast-expt 3 5)   ; expect 243
+; (fast-expt 10 4)  ; expect 10000
+; (fast-expt 2 20)  ; expect 1048576
+
+
+; Exercise 1.17: The exponentiation algorithms in this section are based on performing exponentiation by means of repeated multiplication. In a similar way, one can perform integer multiplication by means of repeated addition. The following multiplication procedure (in which it is assumed that our language can only add, not multiply) is analogous to the expt procedure:
+
+; (define (* a b)
+;   (if (= b 0)
+;       0
+;       (+ a (* a (- b 1)))))
+
+; This algorithm takes a number of steps that is linear in b. Now suppose we include, together with addition, operations double, which doubles an integer, and halve, which divides an (even) integer by 2. Using these, design a multiplication procedure analogous to fast-expt that uses a logarithmic number of steps. 
+
+(define (double n) (+ n n))
+(define (halve n ) (/ n 2))
+
+; In the example function written, it uses this property:
+; a * b = a + a*(b-1)
+; we want to use halve and double
+; suppose both a and b > 1, and b is even
+; a*b = (double a) * (halve b)
+; now suppose b is odd, we use the previous identity
+; base case is when b = 1, return a
+
+; (define (* a b)
+;     (cond 
+;         ((= b 1) a)
+;         ((odd? b) (+ a (* a (- b 1))))
+;         (else (* (double a) (halve b)))
+;     )
+; )
+
+; Exercise 1.18: Using the results of Exercise 1.16 and Exercise 1.17, devise a procedure that generates an iterative process for multiplying two integers in terms of adding, doubling, and halving and uses a logarithmic number of steps.
+; like in exercise 1.16 we want to use a state variable that does not change value
+; the transformation is the same as the previous example
+; inavriant quantity is a * b + n
+; so if b is odd we can do: a*(b-1) + (n+a)
+; if b is even just: (double a)*(halve b) + n
+; want to write procedure with tail recursion so it's iterative
+
+(define (* a b) (mult-iter a b 0))
+(define (mult-iter a b n)
+    (cond
+    ((= b 0) 0) ; need this for edge case
+    ((= b 1) (+ a n))
+    ((odd? b) (mult-iter a (- b 1) (+ n a)))
+    (else (mult-iter (double a) (halve b) n))
+    )
 )
 
-(fast-expt 2 3)   ; expect 8
-(fast-expt 2 2)   ; expect 4
-(fast-expt 1 3)   ; expect 1
-(fast-expt 2 10)  ; expect 1024
-(fast-expt 3 3)   ; expect 27
-(fast-expt 3 4)   ; expect 81
-(fast-expt 5 3)   ; expect 125
-(fast-expt 2 0)   ; expect 1
-(fast-expt 7 2)   ; expect 49
-(fast-expt 2 16)  ; expect 65536
-(fast-expt 3 5)   ; expect 243
-(fast-expt 10 4)  ; expect 10000
-(fast-expt 2 20)  ; expect 1048576
-
-
+(* 2 3)     ; expect 6
+(* 1 1)     ; expect 1
+(* 10 10)   ; expect 100
+(* 5 1)     ; expect 5  (base case)
+(* 7 2)     ; expect 14 (even b)
+(* 7 3)     ; expect 21 (odd b)
+(* 0 5)     ; expect 0  (zero case — will this work?)
+(* 5 0)     ; expect 0  (zero case — will this work?)
+(* 1 100)   ; expect 100
+(* 2 16)    ; expect 32 (b is power of 2)
+(* 3 11)    ; expect 33 (odd b)
+(* 100 100) ; expect 10000
